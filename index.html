@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#7a4b2f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="便便贪吃蛇" />
+    <title>便便贪吃蛇</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="backdrop backdrop-a"></div>
+    <div class="backdrop backdrop-b"></div>
+
+    <main class="app-shell">
+      <section class="hero-card">
+        <div class="title-row">
+          <div>
+            <p class="eyebrow">Mini Game App</p>
+            <h1>便便贪吃蛇</h1>
+          </div>
+          <button id="installBtn" class="install-btn" hidden>安装 APP</button>
+        </div>
+
+        <p class="subtitle">
+          吃到棕色便便会变长，吃到绿色虫子巧克力会变短。撞墙或撞到自己，游戏结束。
+        </p>
+
+        <div class="rule-strip">
+          <div class="rule-card rule-grow">
+            <span class="rule-icon"></span>
+            <div>
+              <strong>便便</strong>
+              <p>长度 +1，分数 +10</p>
+            </div>
+          </div>
+          <div class="rule-card rule-shrink">
+            <span class="rule-icon"></span>
+            <div>
+              <strong>绿色虫子巧克力</strong>
+              <p>长度 -1，速度微微加快</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="game-layout">
+        <div class="board-card">
+          <div class="status-bar">
+            <div class="stat">
+              <span>分数</span>
+              <strong id="scoreValue">0</strong>
+            </div>
+            <div class="stat">
+              <span>长度</span>
+              <strong id="lengthValue">3</strong>
+            </div>
+            <div class="stat">
+              <span>最快</span>
+              <strong id="bestValue">0</strong>
+            </div>
+          </div>
+
+          <canvas id="gameCanvas" width="420" height="420" aria-label="贪吃蛇游戏画布"></canvas>
+
+          <div class="message-bar">
+            <span id="messageText">按方向键开始，或点“开始游戏”。</span>
+          </div>
+        </div>
+
+        <aside class="side-card">
+          <div class="action-stack">
+            <button id="startBtn" class="primary-btn">开始游戏</button>
+            <button id="pauseBtn" class="ghost-btn">暂停</button>
+            <button id="restartBtn" class="ghost-btn">重新开始</button>
+          </div>
+
+          <div class="tip-card">
+            <h2>操作</h2>
+            <p>电脑：方向键 / WASD</p>
+            <p>手机：使用下面四个方向按钮</p>
+          </div>
+
+          <div class="tip-card">
+            <h2>目标</h2>
+            <p>尽量拉长蛇身，但别被绿色虫子巧克力削得太短。</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="controls-card">
+        <div class="mobile-pad">
+          <button class="pad-btn" data-dir="up" aria-label="向上">上</button>
+          <div class="pad-mid">
+            <button class="pad-btn" data-dir="left" aria-label="向左">左</button>
+            <button class="pad-btn pad-center" id="tapStartBtn" aria-label="开始或暂停">开</button>
+            <button class="pad-btn" data-dir="right" aria-label="向右">右</button>
+          </div>
+          <button class="pad-btn" data-dir="down" aria-label="向下">下</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

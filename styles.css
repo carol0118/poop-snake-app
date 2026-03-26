@@ -1,0 +1,352 @@
+:root {
+  --bg: #f7efe7;
+  --paper: rgba(255, 249, 244, 0.9);
+  --ink: #2c1d13;
+  --muted: #6b5848;
+  --line: rgba(72, 46, 28, 0.12);
+  --brown: #7a4b2f;
+  --brown-deep: #55301d;
+  --mint: #98d36d;
+  --mint-deep: #4e8b29;
+  --cream: #fff6ef;
+  --shadow: 0 24px 64px rgba(82, 50, 29, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Trebuchet MS", "Microsoft YaHei", sans-serif;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(179, 124, 83, 0.2), transparent 22%),
+    radial-gradient(circle at 88% 82%, rgba(132, 189, 89, 0.22), transparent 24%),
+    linear-gradient(180deg, #fcf5ee 0%, #f1e6db 100%);
+  overflow-x: hidden;
+}
+
+.backdrop {
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(24px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.backdrop-a {
+  width: 240px;
+  height: 240px;
+  left: -60px;
+  top: 80px;
+  background: rgba(122, 75, 47, 0.18);
+}
+
+.backdrop-b {
+  width: 260px;
+  height: 260px;
+  right: -90px;
+  bottom: 50px;
+  background: rgba(120, 190, 76, 0.16);
+}
+
+.app-shell {
+  width: min(1100px, calc(100vw - 24px));
+  margin: 0 auto;
+  padding: 24px 0 40px;
+  display: grid;
+  gap: 18px;
+}
+
+.hero-card,
+.board-card,
+.side-card,
+.controls-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.hero-card,
+.board-card,
+.side-card,
+.controls-card {
+  padding: 22px;
+}
+
+.title-row,
+.status-bar,
+.action-stack,
+.rule-strip,
+.pad-mid,
+.game-layout {
+  display: flex;
+}
+
+.title-row,
+.status-bar {
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #f4ddce;
+  color: var(--brown-deep);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p,
+strong {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1;
+}
+
+h2 {
+  font-size: 1.15rem;
+}
+
+.subtitle {
+  margin-top: 12px;
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.install-btn,
+.primary-btn,
+.ghost-btn,
+.pad-btn {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.install-btn,
+.primary-btn {
+  border-radius: 18px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--brown), #a96c46);
+  color: #fff;
+  font-weight: 800;
+}
+
+.ghost-btn {
+  border-radius: 18px;
+  padding: 13px 18px;
+  background: #f4eadf;
+  color: var(--brown-deep);
+  font-weight: 800;
+}
+
+.rule-strip {
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.rule-card,
+.tip-card {
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  padding: 16px;
+  background: var(--cream);
+}
+
+.rule-card {
+  min-width: 240px;
+  flex: 1 1 260px;
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.rule-card p,
+.tip-card p {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.rule-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: block;
+}
+
+.rule-grow .rule-icon {
+  background:
+    radial-gradient(circle at 45% 30%, #8f6144 0 18%, transparent 19%),
+    radial-gradient(circle at 65% 45%, #6f4025 0 26%, transparent 27%),
+    radial-gradient(circle at 36% 62%, #59301c 0 24%, transparent 25%),
+    linear-gradient(180deg, #9a6647 0%, #5f351e 100%);
+}
+
+.rule-shrink .rule-icon {
+  background:
+    radial-gradient(circle at 40% 45%, #5a3b22 0 26%, transparent 27%),
+    radial-gradient(circle at 66% 52%, #442918 0 17%, transparent 18%),
+    radial-gradient(circle at 78% 26%, #74b74a 0 11%, transparent 12%),
+    radial-gradient(circle at 24% 72%, #95d56c 0 10%, transparent 11%),
+    linear-gradient(180deg, #b17a56 0%, #7b4f32 100%);
+}
+
+.game-layout {
+  gap: 18px;
+  align-items: stretch;
+}
+
+.board-card {
+  flex: 1 1 auto;
+}
+
+.side-card {
+  width: 290px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.action-stack {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-bar {
+  margin-bottom: 16px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  min-width: 100px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #fff9f3;
+  border: 1px solid rgba(72, 46, 28, 0.08);
+}
+
+.stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.5rem;
+}
+
+#gameCanvas {
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 1;
+  display: block;
+  margin: 0 auto;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 247, 239, 0.96), rgba(240, 226, 213, 0.98));
+  border: 1px solid rgba(72, 46, 28, 0.1);
+}
+
+.message-bar {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #fff8f1;
+  color: var(--brown-deep);
+  font-weight: 700;
+}
+
+.controls-card {
+  display: flex;
+  justify-content: center;
+}
+
+.mobile-pad {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.pad-mid {
+  align-items: center;
+  gap: 10px;
+}
+
+.pad-btn {
+  width: 76px;
+  height: 76px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fff9f2, #f2e3d5);
+  color: var(--brown-deep);
+  font-size: 1.1rem;
+  font-weight: 900;
+  box-shadow: inset 0 -4px 0 rgba(122, 75, 47, 0.12);
+}
+
+.pad-center {
+  background: linear-gradient(135deg, var(--mint), #c2eb9b);
+  color: #214311;
+}
+
+@media (max-width: 920px) {
+  .game-layout {
+    flex-direction: column;
+  }
+
+  .side-card {
+    width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    width: min(100vw - 14px, 720px);
+    padding: 10px 0 20px;
+    gap: 12px;
+  }
+
+  .hero-card,
+  .board-card,
+  .side-card,
+  .controls-card {
+    border-radius: 22px;
+    padding: 16px;
+  }
+
+  .title-row,
+  .status-bar {
+    flex-direction: column;
+  }
+
+  .rule-card {
+    min-width: 0;
+  }
+
+  .pad-btn {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "便便贪吃蛇",
+  "short_name": "贪吃蛇",
+  "description": "吃便便会长大，吃绿色虫子巧克力会变小的贪吃蛇小游戏。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fcf5ee",
+  "theme_color": "#7a4b2f",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
