@@ -1,12 +1,13 @@
 const CELL_COUNT = 14;
-const BASE_SPEED = 190;
+const BASE_SPEED = 180;
 const MIN_SPEED = 95;
 const GROW_POINTS = 10;
 const BEST_KEY = "poop-snake-best-score";
 const SWIPE_THRESHOLD = 20;
+const MAX_PARTICLES = 32;
 
 const canvas = document.querySelector("#gameCanvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { alpha: false });
 const scoreValue = document.querySelector("#scoreValue");
 const lengthValue = document.querySelector("#lengthValue");
 const bestValue = document.querySelector("#bestValue");
@@ -23,7 +24,6 @@ const overlayText = document.querySelector("#overlayText");
 const boardWrap = document.querySelector("#boardWrap");
 
 let installPromptEvent = null;
-let timerId = null;
 let speed = BASE_SPEED;
 let score = 0;
 let bestScore = Number(localStorage.getItem(BEST_KEY) || 0);
@@ -37,6 +37,12 @@ let growFood = null;
 let shrinkFood = null;
 let audioContext = null;
 let touchStart = null;
+let particles = [];
+let lastTickAt = 0;
+let lastRenderAt = 0;
+let animationFrameId = 0;
+let cellSize = 0;
+let boardSize = 0;
 
 bestValue.textContent = String(bestScore);
 
@@ -63,6 +69,8 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
 }
+
+window.addEventListener("resize", resizeCanvas);
 
 for (const button of document.querySelectorAll("[data-dir]")) {
   button.addEventListener("click", () => {
@@ -120,10 +128,11 @@ tapStartBtn.addEventListener("click", () => {
   toggleStartPause();
 });
 
+resizeCanvas();
 resetGame();
+startRenderLoop();
 
 function resetGame() {
-  clearTimer();
   speed = BASE_SPEED;
   score = 0;
   pendingGrowth = 0;
@@ -131,6 +140,7 @@ function resetGame() {
   queuedDirection = { x: 1, y: 0 };
   isRunning = false;
   isGameOver = false;
+  particles = [];
   snake = [
     { x: 3, y: 7 },
     { x: 2, y: 7 },
@@ -138,11 +148,11 @@ function resetGame() {
   ];
   growFood = randomFreeCell();
   shrinkFood = randomFreeCell([growFood]);
+  lastTickAt = performance.now();
   syncStats();
   setStatus("待机");
   setMessage("准备好了。手指滑一下，灵灵就开吃。");
   setOverlay("往上滑，灵灵快吃", "在棋盘上滑动控制方向，也能点下面方向按钮。", false);
-  draw();
 }
 
 function startGame() {
@@ -153,12 +163,12 @@ function startGame() {
     resetGame();
   }
   isRunning = true;
+  lastTickAt = performance.now();
   setStatus("进行中");
   setMessage("灵灵快吃，先去追便便。");
   setOverlay("", "", true);
   vibrate([20, 40, 20]);
   playSound("start");
-  runLoop();
 }
 
 function pauseGame() {
@@ -166,7 +176,6 @@ function pauseGame() {
     return;
   }
   isRunning = false;
-  clearTimer();
   setStatus("暂停");
   setMessage("暂停中。点开始继续吃。");
   setOverlay("先停一下", "点开始继续，或者直接继续滑动。", false);
@@ -203,16 +212,6 @@ function handleDirection(next) {
   }
 }
 
-function runLoop() {
-  clearTimer();
-  timerId = window.setTimeout(() => {
-    tick();
-    if (isRunning) {
-      runLoop();
-    }
-  }, speed);
-}
-
 function tick() {
   direction = queuedDirection;
   const nextHead = {
@@ -230,6 +229,7 @@ function tick() {
   if (sameCell(nextHead, growFood)) {
     pendingGrowth += 1;
     score += GROW_POINTS;
+    spawnPoopParticles(nextHead);
     setMessage("灵灵快吃，便便到手了。");
     vibrate(25);
     playSound("grow");
@@ -250,7 +250,6 @@ function tick() {
   }
 
   syncStats();
-  draw();
 }
 
 function shrinkSnake() {
@@ -264,7 +263,6 @@ function shrinkSnake() {
 function gameOver() {
   isRunning = false;
   isGameOver = true;
-  clearTimer();
   bestScore = Math.max(bestScore, score);
   localStorage.setItem(BEST_KEY, String(bestScore));
   setStatus("结束");
@@ -273,7 +271,6 @@ function gameOver() {
   vibrate([60, 40, 90]);
   playSound("gameOver");
   syncStats();
-  draw(true);
 }
 
 function syncStats() {
@@ -322,9 +319,52 @@ function randomFreeCell(extraBlocked = []) {
   return free[Math.floor(Math.random() * free.length)];
 }
 
-function draw(showOverlay = false) {
-  const size = canvas.width;
-  const cell = size / CELL_COUNT;
+function startRenderLoop() {
+  cancelAnimationFrame(animationFrameId);
+  animationFrameId = requestAnimationFrame(renderLoop);
+}
+
+function renderLoop(now) {
+  if (!lastRenderAt) {
+    lastRenderAt = now;
+  }
+
+  const delta = now - lastRenderAt;
+  lastRenderAt = now;
+
+  if (isRunning && now - lastTickAt >= speed) {
+    lastTickAt = now;
+    tick();
+  }
+
+  updateParticles(delta);
+  draw();
+  animationFrameId = requestAnimationFrame(renderLoop);
+}
+
+function resizeCanvas() {
+  const heroHeight = document.querySelector(".hero-card").offsetHeight;
+  const controlsHeight = document.querySelector(".controls-card").offsetHeight;
+  const hudHeight = document.querySelector(".hud-bar").offsetHeight;
+  const messageHeight = document.querySelector(".message-bar").offsetHeight;
+  const gapBudget = 56;
+  const available = window.innerHeight - heroHeight - controlsHeight - hudHeight - messageHeight - gapBudget;
+  const cssSize = Math.max(280, Math.min(boardWrap.clientWidth - 12, available));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  boardSize = cssSize;
+  cellSize = boardSize / CELL_COUNT;
+
+  canvas.style.width = `${cssSize}px`;
+  canvas.style.height = `${cssSize}px`;
+  canvas.width = Math.round(cssSize * dpr);
+  canvas.height = Math.round(cssSize * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function draw() {
+  const size = boardSize;
+  const cell = cellSize;
 
   ctx.clearRect(0, 0, size, size);
 
@@ -343,8 +383,10 @@ function draw(showOverlay = false) {
 
   drawPoop(growFood, cell);
   drawBugChocolate(shrinkFood, cell);
+  drawParticles();
 
-  snake.forEach((segment, index) => {
+  for (let index = snake.length - 1; index >= 0; index -= 1) {
+    const segment = snake[index];
     const px = segment.x * cell;
     const py = segment.y * cell;
     const radius = cell * 0.28;
@@ -353,7 +395,7 @@ function draw(showOverlay = false) {
     bodyGradient.addColorStop(1, index === 0 ? "#59311c" : "#8e5838");
 
     ctx.fillStyle = bodyGradient;
-    roundRect(px + 3, py + 3, cell - 6, cell - 6, radius);
+    roundRect(px + 2.5, py + 2.5, cell - 5, cell - 5, radius);
     ctx.fill();
 
     if (index === 0) {
@@ -369,10 +411,10 @@ function draw(showOverlay = false) {
       ctx.arc(px + cell * 0.63, py + cell * 0.35, cell * 0.03, 0, Math.PI * 2);
       ctx.fill();
     }
-  });
+  }
 
-  if (showOverlay) {
-    ctx.fillStyle = "rgba(34, 21, 13, 0.32)";
+  if (isGameOver) {
+    ctx.fillStyle = "rgba(34, 21, 13, 0.24)";
     ctx.fillRect(0, 0, size, size);
   }
 }
@@ -389,11 +431,6 @@ function drawPoop(cell, size) {
   ctx.ellipse(x + size * 0.5, y + size * 0.72, size * 0.22, size * 0.14, 0, 0, Math.PI * 2);
   ctx.ellipse(x + size * 0.5, y + size * 0.5, size * 0.18, size * 0.14, 0, 0, Math.PI * 2);
   ctx.ellipse(x + size * 0.5, y + size * 0.33, size * 0.12, size * 0.1, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(255,255,255,0.22)";
-  ctx.beginPath();
-  ctx.arc(x + size * 0.57, y + size * 0.28, size * 0.05, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -416,6 +453,64 @@ function drawBugChocolate(cell, size) {
   ctx.fill();
 }
 
+function spawnPoopParticles(cell) {
+  const centerX = cell.x * cellSize + cellSize * 0.5;
+  const centerY = cell.y * cellSize + cellSize * 0.5;
+  const burstCount = 12;
+
+  for (let i = 0; i < burstCount; i += 1) {
+    if (particles.length >= MAX_PARTICLES) {
+      particles.shift();
+    }
+
+    const angle = (Math.PI * 2 * i) / burstCount + Math.random() * 0.35;
+    const velocity = 0.045 + Math.random() * 0.08;
+    particles.push({
+      x: centerX,
+      y: centerY,
+      vx: Math.cos(angle) * velocity * cellSize,
+      vy: Math.sin(angle) * velocity * cellSize,
+      life: 420 + Math.random() * 180,
+      maxLife: 420 + Math.random() * 180,
+      size: 3 + Math.random() * 4,
+      color: Math.random() > 0.35 ? "#7b4729" : "#a96c46"
+    });
+  }
+}
+
+function updateParticles(delta) {
+  if (!particles.length) {
+    return;
+  }
+
+  particles = particles.filter((particle) => {
+    particle.life -= delta;
+    particle.x += particle.vx * (delta / 16.67);
+    particle.y += particle.vy * (delta / 16.67);
+    particle.vx *= 0.97;
+    particle.vy *= 0.97;
+    return particle.life > 0;
+  });
+}
+
+function drawParticles() {
+  for (const particle of particles) {
+    const alpha = Math.max(0, particle.life / particle.maxLife);
+    ctx.fillStyle = hexToRgba(particle.color, alpha);
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, particle.size * alpha, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function hexToRgba(hex, alpha) {
+  const value = hex.replace("#", "");
+  const r = Number.parseInt(value.slice(0, 2), 16);
+  const g = Number.parseInt(value.slice(2, 4), 16);
+  const b = Number.parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function roundRect(x, y, width, height, radius) {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -424,13 +519,6 @@ function roundRect(x, y, width, height, radius) {
   ctx.arcTo(x, y + height, x, y, radius);
   ctx.arcTo(x, y, x + width, y, radius);
   ctx.closePath();
-}
-
-function clearTimer() {
-  if (timerId) {
-    window.clearTimeout(timerId);
-    timerId = null;
-  }
 }
 
 function setMessage(text) {
@@ -465,7 +553,7 @@ function playSound(type) {
 
   const now = audioContext.currentTime;
   const master = audioContext.createGain();
-  master.gain.setValueAtTime(0.9, now);
+  master.gain.setValueAtTime(0.85, now);
   master.connect(audioContext.destination);
 
   const patterns = {

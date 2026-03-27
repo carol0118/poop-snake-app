@@ -7,8 +7,7 @@
   --brown: #77462c;
   --brown-deep: #4c2918;
   --mint: #8fd05d;
-  --mint-deep: #477b25;
-  --shadow: 0 24px 60px rgba(78, 48, 27, 0.18);
+  --shadow: 0 18px 40px rgba(78, 48, 27, 0.14);
 }
 
 * {
@@ -23,13 +22,14 @@ body {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   color: var(--ink);
   font-family: "Trebuchet MS", "Microsoft YaHei", sans-serif;
   background:
-    radial-gradient(circle at 12% 15%, rgba(183, 123, 82, 0.22), transparent 24%),
-    radial-gradient(circle at 82% 78%, rgba(123, 191, 85, 0.18), transparent 24%),
+    radial-gradient(circle at 12% 15%, rgba(183, 123, 82, 0.18), transparent 24%),
+    radial-gradient(circle at 82% 78%, rgba(123, 191, 85, 0.12), transparent 24%),
     linear-gradient(180deg, #fbf2e9 0%, #ead8c6 100%);
-  overflow-x: hidden;
+  overflow: hidden;
   touch-action: manipulation;
 }
 
@@ -42,32 +42,35 @@ canvas {
   position: fixed;
   border-radius: 999px;
   filter: blur(30px);
-  opacity: 0.55;
+  opacity: 0.42;
   pointer-events: none;
 }
 
 .backdrop-a {
-  width: 260px;
-  height: 260px;
-  left: -80px;
-  top: 90px;
-  background: rgba(122, 70, 44, 0.22);
+  width: 200px;
+  height: 200px;
+  left: -60px;
+  top: 64px;
+  background: rgba(122, 70, 44, 0.18);
 }
 
 .backdrop-b {
-  width: 280px;
-  height: 280px;
-  right: -100px;
-  bottom: 30px;
-  background: rgba(128, 200, 91, 0.18);
+  width: 220px;
+  height: 220px;
+  right: -90px;
+  bottom: 40px;
+  background: rgba(128, 200, 91, 0.14);
 }
 
 .app-shell {
-  width: min(760px, calc(100vw - 18px));
+  width: min(100vw - 10px, 760px);
+  height: 100vh;
+  height: 100dvh;
   margin: 0 auto;
-  padding: 12px 0 calc(24px + env(safe-area-inset-bottom));
+  padding: 8px 0 calc(10px + env(safe-area-inset-bottom));
   display: grid;
-  gap: 14px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
 }
 
 .hero-card,
@@ -75,10 +78,25 @@ canvas {
 .controls-card {
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 28px;
+  border-radius: 24px;
   box-shadow: var(--shadow);
-  backdrop-filter: blur(14px);
-  padding: 18px;
+  backdrop-filter: blur(10px);
+}
+
+.hero-card {
+  padding: 12px 14px;
+}
+
+.arena-card {
+  padding: 10px;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.controls-card {
+  padding: 10px;
 }
 
 h1,
@@ -89,35 +107,35 @@ strong {
 }
 
 .eyebrow {
-  margin: 0 0 10px;
   display: inline-flex;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
   background: #f5dfd0;
   color: var(--brown-deep);
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
 }
 
 h1 {
-  font-size: clamp(2.2rem, 8vw, 4rem);
+  margin-top: 6px;
+  font-size: clamp(1.7rem, 7vw, 2.5rem);
   line-height: 0.95;
 }
 
 .subtitle {
-  margin-top: 10px;
+  margin-top: 6px;
   color: var(--muted);
-  line-height: 1.65;
-  font-size: 0.98rem;
+  line-height: 1.45;
+  font-size: 0.88rem;
 }
 
 .hero-actions {
-  margin-top: 16px;
+  margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .primary-btn,
@@ -131,31 +149,31 @@ h1 {
 
 .primary-btn,
 .install-btn {
-  min-height: 52px;
-  border-radius: 18px;
+  min-height: 42px;
+  border-radius: 16px;
   background: linear-gradient(180deg, #94603e, var(--brown));
   color: #fff;
   font-weight: 900;
-  box-shadow: inset 0 -5px 0 rgba(49, 24, 12, 0.24);
+  box-shadow: inset 0 -4px 0 rgba(49, 24, 12, 0.22);
 }
 
 .ghost-btn {
-  min-height: 52px;
-  border-radius: 18px;
+  min-height: 42px;
+  border-radius: 16px;
   background: linear-gradient(180deg, #fffaf4, #f1dfcf);
   color: var(--brown-deep);
   font-weight: 900;
-  box-shadow: inset 0 -5px 0 rgba(127, 85, 57, 0.13);
+  box-shadow: inset 0 -4px 0 rgba(127, 85, 57, 0.13);
 }
 
 .rule-strip,
 .hud-bar {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .rule-strip {
-  margin-top: 16px;
+  margin-top: 10px;
   grid-template-columns: 1fr 1fr;
 }
 
@@ -166,25 +184,25 @@ h1 {
 }
 
 .rule-card {
-  border-radius: 22px;
-  padding: 14px;
+  border-radius: 18px;
+  padding: 10px;
   display: grid;
-  grid-template-columns: 54px 1fr;
-  gap: 12px;
+  grid-template-columns: 40px 1fr;
+  gap: 10px;
   align-items: center;
 }
 
 .rule-card p {
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--muted);
-  line-height: 1.55;
-  font-size: 0.95rem;
+  line-height: 1.35;
+  font-size: 0.82rem;
 }
 
 .rule-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
   display: block;
 }
 
@@ -207,49 +225,51 @@ h1 {
 
 .hud-bar {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-bottom: 12px;
 }
 
 .hud-pill {
-  border-radius: 18px;
-  padding: 12px 14px;
+  border-radius: 16px;
+  padding: 8px 10px;
 }
 
 .hud-pill span {
   display: block;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   letter-spacing: 0.04em;
 }
 
 .hud-pill strong {
   display: block;
-  margin-top: 6px;
-  font-size: 1.35rem;
+  margin-top: 4px;
+  font-size: 1.05rem;
 }
 
 .board-wrap {
   position: relative;
-  border-radius: 30px;
-  padding: 10px;
+  min-height: 0;
+  border-radius: 24px;
+  padding: 6px;
   background:
-    linear-gradient(180deg, rgba(112, 67, 42, 0.18), rgba(115, 176, 73, 0.08)),
+    linear-gradient(180deg, rgba(112, 67, 42, 0.12), rgba(115, 176, 73, 0.08)),
     rgba(255, 248, 240, 0.7);
   border: 1px solid rgba(72, 46, 28, 0.12);
   overflow: hidden;
+  display: flex;
 }
 
 #gameCanvas {
   width: 100%;
+  height: 100%;
   display: block;
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 247, 239, 0.96), rgba(240, 226, 213, 0.98));
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 247, 239, 0.98), rgba(240, 226, 213, 0.98));
   touch-action: none;
 }
 
 .overlay-panel {
   position: absolute;
-  inset: 22px;
+  inset: 18px;
   display: grid;
   place-content: center;
   justify-items: center;
@@ -258,7 +278,7 @@ h1 {
   padding: 20px;
   background: linear-gradient(180deg, rgba(42, 25, 15, 0.24), rgba(42, 25, 15, 0.44));
   color: #fff7ef;
-  border-radius: 24px;
+  border-radius: 18px;
   transition: opacity 180ms ease;
 }
 
@@ -278,13 +298,13 @@ h1 {
 }
 
 .overlay-panel h2 {
-  font-size: clamp(1.8rem, 7vw, 2.8rem);
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
   line-height: 1;
 }
 
 .overlay-panel p {
   max-width: 300px;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .swipe-guide {
@@ -331,50 +351,49 @@ h1 {
 }
 
 .message-bar {
-  margin-top: 12px;
-  min-height: 52px;
-  border-radius: 18px;
-  padding: 14px 16px;
+  min-height: 44px;
+  border-radius: 16px;
+  padding: 10px 12px;
   background: linear-gradient(180deg, #fffaf4, #f4e5d6);
   color: var(--brown-deep);
   font-weight: 800;
   display: flex;
   align-items: center;
+  font-size: 0.88rem;
 }
 
 .controls-card {
-  padding: 16px;
   position: sticky;
-  bottom: 10px;
+  bottom: 6px;
 }
 
 .mobile-pad {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   justify-items: center;
 }
 
 .pad-mid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
   width: 100%;
 }
 
 .pad-btn {
-  min-height: 78px;
-  border-radius: 24px;
+  min-height: 62px;
+  border-radius: 20px;
   background: linear-gradient(180deg, #fffaf5, #eedac7);
   color: var(--brown-deep);
-  font-size: 1.18rem;
+  font-size: 1.05rem;
   font-weight: 900;
-  box-shadow: inset 0 -5px 0 rgba(104, 64, 39, 0.12);
+  box-shadow: inset 0 -4px 0 rgba(104, 64, 39, 0.12);
   user-select: none;
 }
 
 .pad-up,
 .pad-down {
-  width: min(220px, 50vw);
+  width: min(190px, 46vw);
 }
 
 .pad-center {
@@ -392,32 +411,27 @@ h1 {
 
 @media (max-width: 480px) {
   .app-shell {
-    width: min(100vw - 12px, 760px);
+    width: min(100vw - 8px, 760px);
+    gap: 6px;
   }
 
   .hero-card,
   .arena-card,
   .controls-card {
-    padding: 14px;
-    border-radius: 24px;
-  }
-
-  .board-wrap {
-    padding: 8px;
+    padding: 10px;
+    border-radius: 20px;
   }
 
   .overlay-panel {
-    inset: 16px;
-  }
-
-  .hero-actions,
-  .hud-bar,
-  .rule-strip {
-    grid-template-columns: 1fr 1fr;
+    inset: 12px;
   }
 
   .pad-btn {
-    min-height: 72px;
-    border-radius: 22px;
+    min-height: 58px;
+    border-radius: 18px;
+  }
+
+  .subtitle {
+    font-size: 0.82rem;
   }
 }
