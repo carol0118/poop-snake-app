@@ -46,9 +46,18 @@ let animationFrameId = 0;
 let cellSize = 0;
 let boardSize = 0;
 let toastTimerId = 0;
+let audioElements = {};
 
 bestValue.textContent = String(bestScore);
 updateSoundButton();
+
+document.addEventListener("WeixinJSBridgeReady", () => {
+  unlockAudio(false);
+});
+
+document.addEventListener("YixinJSBridgeReady", () => {
+  unlockAudio(false);
+});
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -560,31 +569,36 @@ function vibrate(pattern) {
 }
 
 async function unlockAudio(playTest) {
-  if (!window.AudioContext && !window.webkitAudioContext) {
-    showToast("这个浏览器不支持音效。");
-    return;
-  }
+  if (window.AudioContext || window.webkitAudioContext) {
+    if (!audioContext) {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      audioContext = new AudioCtor();
+    }
 
-  if (!audioContext) {
-    const AudioCtor = window.AudioContext || window.webkitAudioContext;
-    audioContext = new AudioCtor();
-  }
-
-  if (audioContext.state === "suspended") {
-    try {
-      await audioContext.resume();
-    } catch {
-      showToast("音效没有成功开启。");
-      return;
+    if (audioContext.state === "suspended") {
+      try {
+        await audioContext.resume();
+      } catch {
+        // fall through to html audio fallback
+      }
     }
   }
 
-  audioReady = audioContext.state === "running";
+  if (!audioElements.start) {
+    audioElements = createAudioFallbacks();
+  }
+
+  audioReady = Boolean(
+    (audioContext && audioContext.state === "running") ||
+    Object.keys(audioElements).length
+  );
   updateSoundButton();
 
   if (playTest && audioReady) {
     playSound("start");
     showToast("音效已开启。");
+  } else if (playTest && !audioReady) {
+    showToast("这个浏览器没有成功开启音效。");
   }
 }
 
@@ -594,50 +608,140 @@ function updateSoundButton() {
 }
 
 function playSound(type) {
-  if (!audioContext || audioContext.state !== "running") {
-    return;
+  if (audioContext && audioContext.state === "running") {
+    const now = audioContext.currentTime;
+    const master = audioContext.createGain();
+    master.gain.setValueAtTime(1.15, now);
+    master.connect(audioContext.destination);
+
+    const patterns = {
+      start: [
+        [659.25, 0.08, "triangle", 0.1],
+        [783.99, 0.09, "triangle", 0.1],
+        [1046.5, 0.14, "triangle", 0.09]
+      ],
+      grow: [
+        [783.99, 0.05, "sine", 0.11],
+        [987.77, 0.07, "triangle", 0.1],
+        [1318.51, 0.12, "triangle", 0.09]
+      ],
+      shrink: [
+        [369.99, 0.05, "square", 0.06],
+        [277.18, 0.1, "square", 0.05]
+      ],
+      gameOver: [
+        [392, 0.09, "sawtooth", 0.06],
+        [261.63, 0.11, "sawtooth", 0.055],
+        [174.61, 0.22, "sawtooth", 0.05]
+      ]
+    };
+
+    let cursor = now;
+    for (const [frequency, duration, wave, volume] of patterns[type] || []) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = wave;
+      osc.frequency.setValueAtTime(frequency, cursor);
+      gain.gain.setValueAtTime(0.0001, cursor);
+      gain.gain.exponentialRampToValueAtTime(volume, cursor + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, cursor + duration);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(cursor);
+      osc.stop(cursor + duration);
+      cursor += duration * 0.82;
+    }
   }
 
-  const now = audioContext.currentTime;
-  const master = audioContext.createGain();
-  master.gain.setValueAtTime(1.15, now);
-  master.connect(audioContext.destination);
+  const fallback = audioElements[type];
+  if (fallback) {
+    fallback.currentTime = 0;
+    fallback.play().catch(() => {});
+  }
+}
 
+function createAudioFallbacks() {
   const patterns = {
     start: [
-      [659.25, 0.08, "triangle", 0.1],
-      [783.99, 0.09, "triangle", 0.1],
-      [1046.5, 0.14, "triangle", 0.09]
+      [659.25, 0.08],
+      [783.99, 0.09],
+      [1046.5, 0.14]
     ],
     grow: [
-      [783.99, 0.05, "sine", 0.11],
-      [987.77, 0.07, "triangle", 0.1],
-      [1318.51, 0.12, "triangle", 0.09]
+      [783.99, 0.05],
+      [987.77, 0.07],
+      [1318.51, 0.12]
     ],
     shrink: [
-      [369.99, 0.05, "square", 0.06],
-      [277.18, 0.1, "square", 0.05]
+      [369.99, 0.05],
+      [277.18, 0.1]
     ],
     gameOver: [
-      [392, 0.09, "sawtooth", 0.06],
-      [261.63, 0.11, "sawtooth", 0.055],
-      [174.61, 0.22, "sawtooth", 0.05]
+      [392, 0.09],
+      [261.63, 0.11],
+      [174.61, 0.22]
     ]
   };
 
-  let cursor = now;
-  for (const [frequency, duration, wave, volume] of patterns[type] || []) {
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    osc.type = wave;
-    osc.frequency.setValueAtTime(frequency, cursor);
-    gain.gain.setValueAtTime(0.0001, cursor);
-    gain.gain.exponentialRampToValueAtTime(volume, cursor + 0.006);
-    gain.gain.exponentialRampToValueAtTime(0.0001, cursor + duration);
-    osc.connect(gain);
-    gain.connect(master);
-    osc.start(cursor);
-    osc.stop(cursor + duration);
-    cursor += duration * 0.82;
+  const result = {};
+  for (const [key, pattern] of Object.entries(patterns)) {
+    const audio = new Audio(buildWaveDataUrl(pattern));
+    audio.preload = "auto";
+    result[key] = audio;
+  }
+  return result;
+}
+
+function buildWaveDataUrl(pattern) {
+  const sampleRate = 22050;
+  const totalDuration = pattern.reduce((sum, [, duration]) => sum + duration * 0.82, 0) + 0.04;
+  const sampleCount = Math.ceil(totalDuration * sampleRate);
+  const buffer = new Uint8Array(44 + sampleCount * 2);
+  const view = new DataView(buffer.buffer);
+
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, 36 + sampleCount * 2, true);
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(view, 36, "data");
+  view.setUint32(40, sampleCount * 2, true);
+
+  let offsetSeconds = 0;
+  for (const [frequency, duration] of pattern) {
+    const start = Math.floor(offsetSeconds * sampleRate);
+    const length = Math.floor(duration * sampleRate);
+    for (let i = 0; i < length; i += 1) {
+      const t = i / sampleRate;
+      const attack = Math.min(1, i / 80);
+      const release = Math.min(1, (length - i) / 220);
+      const env = attack * release;
+      const sample =
+        Math.sin(2 * Math.PI * frequency * t) * 0.28 * env +
+        Math.sin(2 * Math.PI * frequency * 2 * t) * 0.08 * env;
+      const index = 44 + (start + i) * 2;
+      const current = view.getInt16(index, true) || 0;
+      const mixed = Math.max(-1, Math.min(1, current / 32767 + sample));
+      view.setInt16(index, mixed * 32767, true);
+    }
+    offsetSeconds += duration * 0.82;
+  }
+
+  let binary = "";
+  for (const value of buffer) {
+    binary += String.fromCharCode(value);
+  }
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+function writeString(view, offset, text) {
+  for (let i = 0; i < text.length; i += 1) {
+    view.setUint8(offset + i, text.charCodeAt(i));
   }
 }
