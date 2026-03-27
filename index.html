@@ -20,22 +20,20 @@
     <main class="app-shell">
       <section class="hero-card">
         <div class="hero-row">
-          <div>
+          <div class="hero-title">
             <p class="eyebrow">Ling Ling Rush</p>
             <h1>便便贪吃蛇</h1>
           </div>
-          <button id="installBtn" class="install-btn" hidden>安装</button>
+          <div class="hero-tools">
+            <button id="soundBtn" class="sound-btn" type="button" aria-label="开启声音">音效开</button>
+            <button id="installBtn" class="install-btn" hidden>安装</button>
+          </div>
         </div>
 
         <div class="hero-actions">
           <button id="startBtn" class="primary-btn">开始</button>
           <button id="pauseBtn" class="ghost-btn">暂停</button>
           <button id="restartBtn" class="ghost-btn">重开</button>
-        </div>
-
-        <div class="mini-rules">
-          <span class="mini-pill">便便 +1</span>
-          <span class="mini-pill mini-pill-danger">虫巧 -1</span>
         </div>
       </section>
 
@@ -70,10 +68,7 @@
             <h2 id="overlayTitle">往上滑，灵灵快吃</h2>
             <p id="overlayText">在棋盘上滑动控制方向，也能点底部方向键。</p>
           </div>
-        </div>
-
-        <div class="message-bar">
-          <span id="messageText">准备好了。手指滑一下，灵灵就开吃。</span>
+          <div id="toastMessage" class="toast-message">准备好了。手指滑一下，灵灵就开吃。</div>
         </div>
       </section>
 

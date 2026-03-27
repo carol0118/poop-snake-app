@@ -12,16 +12,17 @@ const scoreValue = document.querySelector("#scoreValue");
 const lengthValue = document.querySelector("#lengthValue");
 const bestValue = document.querySelector("#bestValue");
 const statusValue = document.querySelector("#statusValue");
-const messageText = document.querySelector("#messageText");
 const startBtn = document.querySelector("#startBtn");
 const pauseBtn = document.querySelector("#pauseBtn");
 const restartBtn = document.querySelector("#restartBtn");
 const tapStartBtn = document.querySelector("#tapStartBtn");
 const installBtn = document.querySelector("#installBtn");
+const soundBtn = document.querySelector("#soundBtn");
 const overlayPanel = document.querySelector("#overlayPanel");
 const overlayTitle = document.querySelector("#overlayTitle");
 const overlayText = document.querySelector("#overlayText");
 const boardWrap = document.querySelector("#boardWrap");
+const toastMessage = document.querySelector("#toastMessage");
 
 let installPromptEvent = null;
 let speed = BASE_SPEED;
@@ -36,6 +37,7 @@ let snake = [];
 let growFood = null;
 let shrinkFood = null;
 let audioContext = null;
+let audioReady = false;
 let touchStart = null;
 let particles = [];
 let lastTickAt = 0;
@@ -43,8 +45,10 @@ let lastRenderAt = 0;
 let animationFrameId = 0;
 let cellSize = 0;
 let boardSize = 0;
+let toastTimerId = 0;
 
 bestValue.textContent = String(bestScore);
+updateSoundButton();
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -54,7 +58,7 @@ window.addEventListener("beforeinstallprompt", (event) => {
 
 installBtn.addEventListener("click", async () => {
   if (!installPromptEvent) {
-    setMessage("请在浏览器菜单里选择“添加到主屏幕”。");
+    showToast("请在浏览器菜单里选择“添加到主屏幕”。");
     return;
   }
 
@@ -62,6 +66,10 @@ installBtn.addEventListener("click", async () => {
   await installPromptEvent.userChoice;
   installPromptEvent = null;
   installBtn.hidden = true;
+});
+
+soundBtn.addEventListener("click", async () => {
+  await unlockAudio(true);
 });
 
 if ("serviceWorker" in navigator) {
@@ -73,16 +81,16 @@ if ("serviceWorker" in navigator) {
 window.addEventListener("resize", resizeCanvas);
 
 for (const button of document.querySelectorAll("[data-dir]")) {
-  button.addEventListener("click", () => {
-    unlockAudio();
+  button.addEventListener("click", async () => {
+    await unlockAudio(false);
     handleDirection(button.dataset.dir);
   });
 }
 
-canvas.addEventListener("touchstart", (event) => {
+canvas.addEventListener("touchstart", async (event) => {
   const touch = event.touches[0];
   touchStart = { x: touch.clientX, y: touch.clientY };
-  unlockAudio();
+  await unlockAudio(false);
 }, { passive: true });
 
 canvas.addEventListener("touchmove", (event) => {
@@ -113,18 +121,24 @@ canvas.addEventListener("touchend", () => {
   touchStart = null;
 }, { passive: true });
 
-boardWrap.addEventListener("pointerdown", unlockAudio, { passive: true });
-startBtn.addEventListener("click", () => {
-  unlockAudio();
+boardWrap.addEventListener("pointerdown", () => {
+  unlockAudio(false);
+}, { passive: true });
+
+startBtn.addEventListener("click", async () => {
+  await unlockAudio(false);
   startGame();
 });
+
 pauseBtn.addEventListener("click", pauseGame);
-restartBtn.addEventListener("click", () => {
-  unlockAudio();
+
+restartBtn.addEventListener("click", async () => {
+  await unlockAudio(false);
   resetGame();
 });
-tapStartBtn.addEventListener("click", () => {
-  unlockAudio();
+
+tapStartBtn.addEventListener("click", async () => {
+  await unlockAudio(false);
   toggleStartPause();
 });
 
@@ -150,9 +164,10 @@ function resetGame() {
   shrinkFood = randomFreeCell([growFood]);
   lastTickAt = performance.now();
   document.body.classList.remove("playing");
+  resizeCanvas();
   syncStats();
   setStatus("待机");
-  setMessage("准备好了。手指滑一下，灵灵就开吃。");
+  showToast("准备好了。手指滑一下，灵灵就开吃。");
   setOverlay("往上滑，灵灵快吃", "在棋盘上滑动控制方向，也能点底部方向键。", false);
 }
 
@@ -165,9 +180,10 @@ function startGame() {
   }
   isRunning = true;
   document.body.classList.add("playing");
+  resizeCanvas();
   lastTickAt = performance.now();
   setStatus("进行中");
-  setMessage("灵灵快吃，先去追便便。");
+  showToast("灵灵快吃，先去追便便。");
   setOverlay("", "", true);
   vibrate([20, 40, 20]);
   playSound("start");
@@ -179,8 +195,9 @@ function pauseGame() {
   }
   isRunning = false;
   document.body.classList.remove("playing");
+  resizeCanvas();
   setStatus("暂停");
-  setMessage("暂停中。点开始继续吃。");
+  showToast("暂停中。点开始继续吃。");
   setOverlay("先停一下", "点开始继续，或者直接继续滑动。", false);
 }
 
@@ -233,14 +250,14 @@ function tick() {
     pendingGrowth += 1;
     score += GROW_POINTS;
     spawnPoopParticles(nextHead);
-    setMessage("灵灵快吃，便便到手了。");
+    showToast("灵灵快吃，便便到手了。");
     vibrate(25);
     playSound("grow");
     growFood = randomFreeCell([shrinkFood]);
   } else if (sameCell(nextHead, shrinkFood)) {
     shrinkSnake();
     speed = Math.max(MIN_SPEED, speed - 8);
-    setMessage("哎呀，吃到绿色虫子巧克力了。");
+    showToast("哎呀，吃到绿色虫子巧克力了。");
     vibrate([15, 30, 15]);
     playSound("shrink");
     shrinkFood = randomFreeCell([growFood]);
@@ -267,10 +284,11 @@ function gameOver() {
   isRunning = false;
   isGameOver = true;
   document.body.classList.remove("playing");
+  resizeCanvas();
   bestScore = Math.max(bestScore, score);
   localStorage.setItem(BEST_KEY, String(bestScore));
   setStatus("结束");
-  setMessage(`撞到了，灵灵这局得分 ${score}。`);
+  showToast(`撞到了，灵灵这局得分 ${score}。`);
   setOverlay("这局结束了", "点重开，再让灵灵快吃一局。", false);
   vibrate([60, 40, 90]);
   playSound("gameOver");
@@ -291,6 +309,17 @@ function setOverlay(title, text, hidden) {
   overlayTitle.textContent = title;
   overlayText.textContent = text;
   overlayPanel.classList.toggle("hidden", hidden);
+}
+
+function showToast(text) {
+  toastMessage.textContent = text;
+  toastMessage.classList.add("visible");
+  clearTimeout(toastTimerId);
+  toastTimerId = window.setTimeout(() => {
+    if (!isGameOver && isRunning) {
+      toastMessage.classList.remove("visible");
+    }
+  }, 1200);
 }
 
 function hitWall(cell) {
@@ -350,10 +379,9 @@ function resizeCanvas() {
   const heroHeight = document.querySelector(".hero-card").offsetHeight;
   const controlsHeight = document.querySelector(".controls-card").offsetHeight;
   const hudHeight = document.querySelector(".hud-bar").offsetHeight;
-  const messageHeight = document.querySelector(".message-bar").offsetHeight;
-  const gapBudget = document.body.classList.contains("playing") ? 18 : 34;
-  const available = window.innerHeight - heroHeight - controlsHeight - hudHeight - messageHeight - gapBudget;
-  const cssSize = Math.max(300, Math.min(boardWrap.clientWidth - 8, available));
+  const gapBudget = document.body.classList.contains("playing") ? 10 : 22;
+  const available = window.innerHeight - heroHeight - controlsHeight - hudHeight - gapBudget;
+  const cssSize = Math.max(320, Math.min(boardWrap.clientWidth - 6, available));
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   boardSize = cssSize;
@@ -525,18 +553,15 @@ function roundRect(x, y, width, height, radius) {
   ctx.closePath();
 }
 
-function setMessage(text) {
-  messageText.textContent = text;
-}
-
 function vibrate(pattern) {
   if ("vibrate" in navigator) {
     navigator.vibrate(pattern);
   }
 }
 
-function unlockAudio() {
+async function unlockAudio(playTest) {
   if (!window.AudioContext && !window.webkitAudioContext) {
+    showToast("这个浏览器不支持音效。");
     return;
   }
 
@@ -546,39 +571,57 @@ function unlockAudio() {
   }
 
   if (audioContext.state === "suspended") {
-    audioContext.resume().catch(() => {});
+    try {
+      await audioContext.resume();
+    } catch {
+      showToast("音效没有成功开启。");
+      return;
+    }
+  }
+
+  audioReady = audioContext.state === "running";
+  updateSoundButton();
+
+  if (playTest && audioReady) {
+    playSound("start");
+    showToast("音效已开启。");
   }
 }
 
+function updateSoundButton() {
+  soundBtn.textContent = audioReady ? "音效开" : "点我开声";
+  soundBtn.classList.toggle("ready", audioReady);
+}
+
 function playSound(type) {
-  if (!audioContext) {
+  if (!audioContext || audioContext.state !== "running") {
     return;
   }
 
   const now = audioContext.currentTime;
   const master = audioContext.createGain();
-  master.gain.setValueAtTime(1, now);
+  master.gain.setValueAtTime(1.15, now);
   master.connect(audioContext.destination);
 
   const patterns = {
     start: [
-      [659.25, 0.06, "triangle", 0.08],
-      [783.99, 0.07, "triangle", 0.08],
-      [1046.5, 0.11, "triangle", 0.07]
+      [659.25, 0.08, "triangle", 0.1],
+      [783.99, 0.09, "triangle", 0.1],
+      [1046.5, 0.14, "triangle", 0.09]
     ],
     grow: [
-      [783.99, 0.05, "sine", 0.085],
-      [987.77, 0.06, "sine", 0.08],
-      [1174.66, 0.1, "triangle", 0.07]
+      [783.99, 0.05, "sine", 0.11],
+      [987.77, 0.07, "triangle", 0.1],
+      [1318.51, 0.12, "triangle", 0.09]
     ],
     shrink: [
-      [369.99, 0.05, "square", 0.05],
-      [277.18, 0.09, "square", 0.04]
+      [369.99, 0.05, "square", 0.06],
+      [277.18, 0.1, "square", 0.05]
     ],
     gameOver: [
-      [392, 0.08, "sawtooth", 0.05],
-      [261.63, 0.1, "sawtooth", 0.045],
-      [174.61, 0.18, "sawtooth", 0.04]
+      [392, 0.09, "sawtooth", 0.06],
+      [261.63, 0.11, "sawtooth", 0.055],
+      [174.61, 0.22, "sawtooth", 0.05]
     ]
   };
 
@@ -589,7 +632,7 @@ function playSound(type) {
     osc.type = wave;
     osc.frequency.setValueAtTime(frequency, cursor);
     gain.gain.setValueAtTime(0.0001, cursor);
-    gain.gain.exponentialRampToValueAtTime(volume, cursor + 0.008);
+    gain.gain.exponentialRampToValueAtTime(volume, cursor + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.0001, cursor + duration);
     osc.connect(gain);
     gain.connect(master);
