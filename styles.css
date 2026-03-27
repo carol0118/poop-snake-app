@@ -1,16 +1,13 @@
 :root {
-  --bg: #f4eadf;
-  --paper: rgba(255, 249, 243, 0.9);
-  --paper-strong: rgba(255, 252, 248, 0.96);
+  --paper: rgba(255, 249, 243, 0.92);
+  --paper-strong: rgba(255, 252, 248, 0.98);
   --ink: #29190f;
   --muted: #715846;
   --line: rgba(77, 48, 30, 0.12);
   --brown: #77462c;
   --brown-deep: #4c2918;
-  --brown-lite: #b97a51;
   --mint: #8fd05d;
   --mint-deep: #477b25;
-  --danger: #9e3f32;
   --shadow: 0 24px 60px rgba(78, 48, 27, 0.18);
 }
 
@@ -75,24 +72,17 @@ canvas {
 
 .hero-card,
 .arena-card,
-.controls-card,
-.touch-card {
+.controls-card {
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 28px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
-}
-
-.hero-card,
-.arena-card,
-.controls-card {
   padding: 18px;
 }
 
-.hero-copy h1,
-.overlay-panel h2,
-.touch-card h3,
+h1,
+h2,
 p,
 strong {
   margin: 0;
@@ -112,7 +102,7 @@ strong {
 }
 
 h1 {
-  font-size: clamp(2.1rem, 8vw, 4rem);
+  font-size: clamp(2.2rem, 8vw, 4rem);
   line-height: 0.95;
 }
 
@@ -126,67 +116,8 @@ h1 {
 .hero-actions {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-}
-
-.rule-strip,
-.hud-bar,
-.control-deck {
-  display: grid;
-  gap: 10px;
-}
-
-.rule-strip {
-  margin-top: 16px;
-}
-
-.rule-card,
-.touch-card,
-.hud-pill {
-  background: var(--paper-strong);
-  border: 1px solid var(--line);
-}
-
-.rule-card {
-  border-radius: 22px;
-  padding: 14px;
-  display: grid;
-  grid-template-columns: 54px 1fr;
-  gap: 12px;
-  align-items: center;
-}
-
-.rule-card p,
-.touch-card p {
-  margin-top: 4px;
-  color: var(--muted);
-  line-height: 1.55;
-  font-size: 0.95rem;
-}
-
-.rule-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
-  display: block;
-}
-
-.rule-grow .rule-icon {
-  background:
-    radial-gradient(circle at 45% 30%, #8f6144 0 18%, transparent 19%),
-    radial-gradient(circle at 65% 45%, #6f4025 0 26%, transparent 27%),
-    radial-gradient(circle at 36% 62%, #59301c 0 24%, transparent 25%),
-    linear-gradient(180deg, #9a6647 0%, #5f351e 100%);
-}
-
-.rule-shrink .rule-icon {
-  background:
-    radial-gradient(circle at 40% 45%, #5a3b22 0 26%, transparent 27%),
-    radial-gradient(circle at 66% 52%, #442918 0 17%, transparent 18%),
-    radial-gradient(circle at 78% 26%, #74b74a 0 11%, transparent 12%),
-    radial-gradient(circle at 24% 72%, #95d56c 0 10%, transparent 11%),
-    linear-gradient(180deg, #b17a56 0%, #7b4f32 100%);
 }
 
 .primary-btn,
@@ -217,12 +148,65 @@ h1 {
   box-shadow: inset 0 -5px 0 rgba(127, 85, 57, 0.13);
 }
 
-.arena-card {
-  position: relative;
+.rule-strip,
+.hud-bar {
+  display: grid;
+  gap: 10px;
+}
+
+.rule-strip {
+  margin-top: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.rule-card,
+.hud-pill {
+  background: var(--paper-strong);
+  border: 1px solid var(--line);
+}
+
+.rule-card {
+  border-radius: 22px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.rule-card p {
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.rule-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: block;
+}
+
+.rule-grow .rule-icon {
+  background:
+    radial-gradient(circle at 45% 30%, #8f6144 0 18%, transparent 19%),
+    radial-gradient(circle at 65% 45%, #6f4025 0 26%, transparent 27%),
+    radial-gradient(circle at 36% 62%, #59301c 0 24%, transparent 25%),
+    linear-gradient(180deg, #9a6647 0%, #5f351e 100%);
+}
+
+.rule-shrink .rule-icon {
+  background:
+    radial-gradient(circle at 40% 45%, #5a3b22 0 26%, transparent 27%),
+    radial-gradient(circle at 66% 52%, #442918 0 17%, transparent 18%),
+    radial-gradient(circle at 78% 26%, #74b74a 0 11%, transparent 12%),
+    radial-gradient(circle at 24% 72%, #95d56c 0 10%, transparent 11%),
+    linear-gradient(180deg, #b17a56 0%, #7b4f32 100%);
 }
 
 .hud-bar {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 12px;
 }
 
@@ -259,8 +243,7 @@ h1 {
   width: 100%;
   display: block;
   border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(255, 247, 239, 0.96), rgba(240, 226, 213, 0.98));
+  background: linear-gradient(180deg, rgba(255, 247, 239, 0.96), rgba(240, 226, 213, 0.98));
   touch-action: none;
 }
 
@@ -304,6 +287,49 @@ h1 {
   line-height: 1.6;
 }
 
+.swipe-guide {
+  position: relative;
+  width: 132px;
+  height: 72px;
+}
+
+.swipe-finger {
+  position: absolute;
+  left: 22px;
+  top: 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fffdf8, #f6dfca);
+  box-shadow: 0 8px 18px rgba(29, 17, 9, 0.22);
+  animation: swipe-finger 1.4s ease-in-out infinite;
+}
+
+.swipe-trail {
+  position: absolute;
+  left: 18px;
+  top: 38px;
+  width: 86px;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.85), rgba(255,255,255,0));
+  animation: swipe-trail 1.4s ease-in-out infinite;
+}
+
+@keyframes swipe-finger {
+  0% { transform: translateX(0); opacity: 0.6; }
+  35% { transform: translateX(0); opacity: 1; }
+  80% { transform: translateX(56px); opacity: 1; }
+  100% { transform: translateX(56px); opacity: 0; }
+}
+
+@keyframes swipe-trail {
+  0% { transform: scaleX(0.25); opacity: 0; transform-origin: left; }
+  35% { transform: scaleX(0.25); opacity: 0.65; }
+  80% { transform: scaleX(1); opacity: 1; transform-origin: left; }
+  100% { transform: scaleX(1); opacity: 0; transform-origin: left; }
+}
+
 .message-bar {
   margin-top: 12px;
   min-height: 52px;
@@ -314,19 +340,6 @@ h1 {
   font-weight: 800;
   display: flex;
   align-items: center;
-}
-
-.control-deck {
-  grid-template-columns: 1fr 1fr;
-}
-
-.touch-card {
-  border-radius: 22px;
-  padding: 14px;
-}
-
-.touch-card h3 {
-  font-size: 1rem;
 }
 
 .controls-card {
@@ -369,18 +382,11 @@ h1 {
   color: #1e3f12;
 }
 
-@media (min-width: 740px) {
-  .hero-actions {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .rule-strip,
-  .hud-bar {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
+@media (max-width: 640px) {
+  .hero-actions,
+  .hud-bar,
   .rule-strip {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -404,8 +410,10 @@ h1 {
     inset: 16px;
   }
 
-  .control-deck {
-    grid-template-columns: 1fr;
+  .hero-actions,
+  .hud-bar,
+  .rule-strip {
+    grid-template-columns: 1fr 1fr;
   }
 
   .pad-btn {

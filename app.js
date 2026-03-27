@@ -64,37 +64,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-document.addEventListener("keydown", (event) => {
-  const map = {
-    ArrowUp: "up",
-    ArrowDown: "down",
-    ArrowLeft: "left",
-    ArrowRight: "right",
-    w: "up",
-    a: "left",
-    s: "down",
-    d: "right",
-    W: "up",
-    A: "left",
-    S: "down",
-    D: "right"
-  };
-
-  if (event.key === " ") {
-    event.preventDefault();
-    toggleStartPause();
-    return;
-  }
-
-  const next = map[event.key];
-  if (!next) {
-    return;
-  }
-
-  event.preventDefault();
-  handleDirection(next);
-});
-
 for (const button of document.querySelectorAll("[data-dir]")) {
   button.addEventListener("click", () => {
     unlockAudio();
@@ -122,6 +91,7 @@ canvas.addEventListener("touchmove", (event) => {
   }
 
   event.preventDefault();
+
   if (Math.abs(deltaX) > Math.abs(deltaY)) {
     handleDirection(deltaX > 0 ? "right" : "left");
   } else {
@@ -170,8 +140,8 @@ function resetGame() {
   shrinkFood = randomFreeCell([growFood]);
   syncStats();
   setStatus("待机");
-  setMessage("准备好了。用手指在棋盘上滑动开始。");
-  setOverlay("向上滑一下开始", "在棋盘上滑动，也可以点下面方向盘。", false);
+  setMessage("准备好了。手指滑一下，灵灵就开吃。");
+  setOverlay("往上滑，灵灵快吃", "在棋盘上滑动控制方向，也能点下面方向按钮。", false);
   draw();
 }
 
@@ -184,8 +154,9 @@ function startGame() {
   }
   isRunning = true;
   setStatus("进行中");
-  setMessage("开始了，先去吃便便。");
+  setMessage("灵灵快吃，先去追便便。");
   setOverlay("", "", true);
+  vibrate([20, 40, 20]);
   playSound("start");
   runLoop();
 }
@@ -197,8 +168,8 @@ function pauseGame() {
   isRunning = false;
   clearTimer();
   setStatus("暂停");
-  setMessage("已暂停。点开始继续。");
-  setOverlay("游戏暂停", "点开始继续，或者在棋盘上继续滑动。", false);
+  setMessage("暂停中。点开始继续吃。");
+  setOverlay("先停一下", "点开始继续，或者直接继续滑动。", false);
 }
 
 function toggleStartPause() {
@@ -259,13 +230,15 @@ function tick() {
   if (sameCell(nextHead, growFood)) {
     pendingGrowth += 1;
     score += GROW_POINTS;
-    setMessage("吃到便便，身体变长了。");
+    setMessage("灵灵快吃，便便到手了。");
+    vibrate(25);
     playSound("grow");
     growFood = randomFreeCell([shrinkFood]);
   } else if (sameCell(nextHead, shrinkFood)) {
     shrinkSnake();
     speed = Math.max(MIN_SPEED, speed - 8);
-    setMessage("吃到绿色虫子巧克力，身体缩了一截。");
+    setMessage("哎呀，吃到绿色虫子巧克力了。");
+    vibrate([15, 30, 15]);
     playSound("shrink");
     shrinkFood = randomFreeCell([growFood]);
   }
@@ -295,8 +268,9 @@ function gameOver() {
   bestScore = Math.max(bestScore, score);
   localStorage.setItem(BEST_KEY, String(bestScore));
   setStatus("结束");
-  setMessage(`撞到了。最终分数 ${score}。`);
-  setOverlay("游戏结束", "点重开再来一局。", false);
+  setMessage(`撞到了，灵灵这局得分 ${score}。`);
+  setOverlay("这局结束了", "点重开，再让灵灵快吃一局。", false);
+  vibrate([60, 40, 90]);
   playSound("gameOver");
   syncStats();
   draw(true);
@@ -463,6 +437,12 @@ function setMessage(text) {
   messageText.textContent = text;
 }
 
+function vibrate(pattern) {
+  if ("vibrate" in navigator) {
+    navigator.vibrate(pattern);
+  }
+}
+
 function unlockAudio() {
   if (!window.AudioContext && !window.webkitAudioContext) {
     return;
@@ -485,26 +465,27 @@ function playSound(type) {
 
   const now = audioContext.currentTime;
   const master = audioContext.createGain();
+  master.gain.setValueAtTime(0.9, now);
   master.connect(audioContext.destination);
 
   const patterns = {
     start: [
-      [392, 0.07, "triangle", 0.06],
-      [523.25, 0.09, "triangle", 0.05],
-      [659.25, 0.12, "triangle", 0.05]
+      [523.25, 0.08, "triangle", 0.06],
+      [659.25, 0.09, "triangle", 0.06],
+      [783.99, 0.12, "triangle", 0.05]
     ],
     grow: [
-      [330, 0.04, "sine", 0.05],
-      [494, 0.06, "sine", 0.05]
+      [587.33, 0.06, "sine", 0.06],
+      [783.99, 0.1, "sine", 0.06]
     ],
     shrink: [
-      [280, 0.04, "square", 0.04],
-      [220, 0.08, "square", 0.03]
+      [311.13, 0.05, "square", 0.045],
+      [233.08, 0.1, "square", 0.035]
     ],
     gameOver: [
-      [320, 0.08, "sawtooth", 0.05],
-      [220, 0.09, "sawtooth", 0.05],
-      [160, 0.18, "sawtooth", 0.04]
+      [349.23, 0.08, "sawtooth", 0.05],
+      [233.08, 0.1, "sawtooth", 0.045],
+      [164.81, 0.2, "sawtooth", 0.035]
     ]
   };
 
@@ -521,6 +502,6 @@ function playSound(type) {
     gain.connect(master);
     osc.start(cursor);
     osc.stop(cursor + duration);
-    cursor += duration * 0.82;
+    cursor += duration * 0.85;
   }
 }
