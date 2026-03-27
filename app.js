@@ -149,10 +149,11 @@ function resetGame() {
   growFood = randomFreeCell();
   shrinkFood = randomFreeCell([growFood]);
   lastTickAt = performance.now();
+  document.body.classList.remove("playing");
   syncStats();
   setStatus("待机");
   setMessage("准备好了。手指滑一下，灵灵就开吃。");
-  setOverlay("往上滑，灵灵快吃", "在棋盘上滑动控制方向，也能点下面方向按钮。", false);
+  setOverlay("往上滑，灵灵快吃", "在棋盘上滑动控制方向，也能点底部方向键。", false);
 }
 
 function startGame() {
@@ -163,6 +164,7 @@ function startGame() {
     resetGame();
   }
   isRunning = true;
+  document.body.classList.add("playing");
   lastTickAt = performance.now();
   setStatus("进行中");
   setMessage("灵灵快吃，先去追便便。");
@@ -176,6 +178,7 @@ function pauseGame() {
     return;
   }
   isRunning = false;
+  document.body.classList.remove("playing");
   setStatus("暂停");
   setMessage("暂停中。点开始继续吃。");
   setOverlay("先停一下", "点开始继续，或者直接继续滑动。", false);
@@ -263,6 +266,7 @@ function shrinkSnake() {
 function gameOver() {
   isRunning = false;
   isGameOver = true;
+  document.body.classList.remove("playing");
   bestScore = Math.max(bestScore, score);
   localStorage.setItem(BEST_KEY, String(bestScore));
   setStatus("结束");
@@ -347,9 +351,9 @@ function resizeCanvas() {
   const controlsHeight = document.querySelector(".controls-card").offsetHeight;
   const hudHeight = document.querySelector(".hud-bar").offsetHeight;
   const messageHeight = document.querySelector(".message-bar").offsetHeight;
-  const gapBudget = 56;
+  const gapBudget = document.body.classList.contains("playing") ? 18 : 34;
   const available = window.innerHeight - heroHeight - controlsHeight - hudHeight - messageHeight - gapBudget;
-  const cssSize = Math.max(280, Math.min(boardWrap.clientWidth - 12, available));
+  const cssSize = Math.max(300, Math.min(boardWrap.clientWidth - 8, available));
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   boardSize = cssSize;
@@ -456,15 +460,15 @@ function drawBugChocolate(cell, size) {
 function spawnPoopParticles(cell) {
   const centerX = cell.x * cellSize + cellSize * 0.5;
   const centerY = cell.y * cellSize + cellSize * 0.5;
-  const burstCount = 12;
+  const burstCount = 14;
 
   for (let i = 0; i < burstCount; i += 1) {
     if (particles.length >= MAX_PARTICLES) {
       particles.shift();
     }
 
-    const angle = (Math.PI * 2 * i) / burstCount + Math.random() * 0.35;
-    const velocity = 0.045 + Math.random() * 0.08;
+    const angle = (Math.PI * 2 * i) / burstCount + Math.random() * 0.42;
+    const velocity = 0.05 + Math.random() * 0.09;
     particles.push({
       x: centerX,
       y: centerY,
@@ -553,27 +557,28 @@ function playSound(type) {
 
   const now = audioContext.currentTime;
   const master = audioContext.createGain();
-  master.gain.setValueAtTime(0.85, now);
+  master.gain.setValueAtTime(1, now);
   master.connect(audioContext.destination);
 
   const patterns = {
     start: [
-      [523.25, 0.08, "triangle", 0.06],
-      [659.25, 0.09, "triangle", 0.06],
-      [783.99, 0.12, "triangle", 0.05]
+      [659.25, 0.06, "triangle", 0.08],
+      [783.99, 0.07, "triangle", 0.08],
+      [1046.5, 0.11, "triangle", 0.07]
     ],
     grow: [
-      [587.33, 0.06, "sine", 0.06],
-      [783.99, 0.1, "sine", 0.06]
+      [783.99, 0.05, "sine", 0.085],
+      [987.77, 0.06, "sine", 0.08],
+      [1174.66, 0.1, "triangle", 0.07]
     ],
     shrink: [
-      [311.13, 0.05, "square", 0.045],
-      [233.08, 0.1, "square", 0.035]
+      [369.99, 0.05, "square", 0.05],
+      [277.18, 0.09, "square", 0.04]
     ],
     gameOver: [
-      [349.23, 0.08, "sawtooth", 0.05],
-      [233.08, 0.1, "sawtooth", 0.045],
-      [164.81, 0.2, "sawtooth", 0.035]
+      [392, 0.08, "sawtooth", 0.05],
+      [261.63, 0.1, "sawtooth", 0.045],
+      [174.61, 0.18, "sawtooth", 0.04]
     ]
   };
 
@@ -584,12 +589,12 @@ function playSound(type) {
     osc.type = wave;
     osc.frequency.setValueAtTime(frequency, cursor);
     gain.gain.setValueAtTime(0.0001, cursor);
-    gain.gain.exponentialRampToValueAtTime(volume, cursor + 0.01);
+    gain.gain.exponentialRampToValueAtTime(volume, cursor + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.0001, cursor + duration);
     osc.connect(gain);
     gain.connect(master);
     osc.start(cursor);
     osc.stop(cursor + duration);
-    cursor += duration * 0.85;
+    cursor += duration * 0.82;
   }
 }
