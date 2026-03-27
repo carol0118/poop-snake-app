@@ -1,21 +1,26 @@
-const GRID_SIZE = 14;
 const CELL_COUNT = 14;
 const BASE_SPEED = 190;
 const MIN_SPEED = 95;
 const GROW_POINTS = 10;
 const BEST_KEY = "poop-snake-best-score";
+const SWIPE_THRESHOLD = 20;
 
 const canvas = document.querySelector("#gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreValue = document.querySelector("#scoreValue");
 const lengthValue = document.querySelector("#lengthValue");
 const bestValue = document.querySelector("#bestValue");
+const statusValue = document.querySelector("#statusValue");
 const messageText = document.querySelector("#messageText");
 const startBtn = document.querySelector("#startBtn");
 const pauseBtn = document.querySelector("#pauseBtn");
 const restartBtn = document.querySelector("#restartBtn");
 const tapStartBtn = document.querySelector("#tapStartBtn");
 const installBtn = document.querySelector("#installBtn");
+const overlayPanel = document.querySelector("#overlayPanel");
+const overlayTitle = document.querySelector("#overlayTitle");
+const overlayText = document.querySelector("#overlayText");
+const boardWrap = document.querySelector("#boardWrap");
 
 let installPromptEvent = null;
 let timerId = null;
@@ -30,6 +35,8 @@ let isGameOver = false;
 let snake = [];
 let growFood = null;
 let shrinkFood = null;
+let audioContext = null;
+let touchStart = null;
 
 bestValue.textContent = String(bestScore);
 
@@ -64,12 +71,12 @@ document.addEventListener("keydown", (event) => {
     ArrowLeft: "left",
     ArrowRight: "right",
     w: "up",
-    W: "up",
-    s: "down",
-    S: "down",
     a: "left",
-    A: "left",
+    s: "down",
     d: "right",
+    W: "up",
+    A: "left",
+    S: "down",
     D: "right"
   };
 
@@ -89,13 +96,59 @@ document.addEventListener("keydown", (event) => {
 });
 
 for (const button of document.querySelectorAll("[data-dir]")) {
-  button.addEventListener("click", () => handleDirection(button.dataset.dir));
+  button.addEventListener("click", () => {
+    unlockAudio();
+    handleDirection(button.dataset.dir);
+  });
 }
 
-startBtn.addEventListener("click", startGame);
+canvas.addEventListener("touchstart", (event) => {
+  const touch = event.touches[0];
+  touchStart = { x: touch.clientX, y: touch.clientY };
+  unlockAudio();
+}, { passive: true });
+
+canvas.addEventListener("touchmove", (event) => {
+  if (!touchStart) {
+    return;
+  }
+
+  const touch = event.touches[0];
+  const deltaX = touch.clientX - touchStart.x;
+  const deltaY = touch.clientY - touchStart.y;
+
+  if (Math.abs(deltaX) < SWIPE_THRESHOLD && Math.abs(deltaY) < SWIPE_THRESHOLD) {
+    return;
+  }
+
+  event.preventDefault();
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    handleDirection(deltaX > 0 ? "right" : "left");
+  } else {
+    handleDirection(deltaY > 0 ? "down" : "up");
+  }
+
+  touchStart = { x: touch.clientX, y: touch.clientY };
+}, { passive: false });
+
+canvas.addEventListener("touchend", () => {
+  touchStart = null;
+}, { passive: true });
+
+boardWrap.addEventListener("pointerdown", unlockAudio, { passive: true });
+startBtn.addEventListener("click", () => {
+  unlockAudio();
+  startGame();
+});
 pauseBtn.addEventListener("click", pauseGame);
-restartBtn.addEventListener("click", resetGame);
-tapStartBtn.addEventListener("click", toggleStartPause);
+restartBtn.addEventListener("click", () => {
+  unlockAudio();
+  resetGame();
+});
+tapStartBtn.addEventListener("click", () => {
+  unlockAudio();
+  toggleStartPause();
+});
 
 resetGame();
 
@@ -116,7 +169,9 @@ function resetGame() {
   growFood = randomFreeCell();
   shrinkFood = randomFreeCell([growFood]);
   syncStats();
-  setMessage("新的一局已准备好。按方向键或点开始。");
+  setStatus("待机");
+  setMessage("准备好了。用手指在棋盘上滑动开始。");
+  setOverlay("向上滑一下开始", "在棋盘上滑动，也可以点下面方向盘。", false);
   draw();
 }
 
@@ -128,7 +183,10 @@ function startGame() {
     resetGame();
   }
   isRunning = true;
-  setMessage("开始了，先找便便吃。");
+  setStatus("进行中");
+  setMessage("开始了，先去吃便便。");
+  setOverlay("", "", true);
+  playSound("start");
   runLoop();
 }
 
@@ -138,7 +196,9 @@ function pauseGame() {
   }
   isRunning = false;
   clearTimer();
-  setMessage("已暂停。");
+  setStatus("暂停");
+  setMessage("已暂停。点开始继续。");
+  setOverlay("游戏暂停", "点开始继续，或者在棋盘上继续滑动。", false);
 }
 
 function toggleStartPause() {
@@ -200,11 +260,13 @@ function tick() {
     pendingGrowth += 1;
     score += GROW_POINTS;
     setMessage("吃到便便，身体变长了。");
+    playSound("grow");
     growFood = randomFreeCell([shrinkFood]);
   } else if (sameCell(nextHead, shrinkFood)) {
     shrinkSnake();
     speed = Math.max(MIN_SPEED, speed - 8);
-    setMessage("吃到绿色虫子巧克力，身体变短了。");
+    setMessage("吃到绿色虫子巧克力，身体缩了一截。");
+    playSound("shrink");
     shrinkFood = randomFreeCell([growFood]);
   }
 
@@ -232,8 +294,11 @@ function gameOver() {
   clearTimer();
   bestScore = Math.max(bestScore, score);
   localStorage.setItem(BEST_KEY, String(bestScore));
-  bestValue.textContent = String(bestScore);
-  setMessage(`撞到了，游戏结束。最终分数 ${score}。`);
+  setStatus("结束");
+  setMessage(`撞到了。最终分数 ${score}。`);
+  setOverlay("游戏结束", "点重开再来一局。", false);
+  playSound("gameOver");
+  syncStats();
   draw(true);
 }
 
@@ -241,6 +306,16 @@ function syncStats() {
   scoreValue.textContent = String(score);
   lengthValue.textContent = String(snake.length);
   bestValue.textContent = String(bestScore);
+}
+
+function setStatus(text) {
+  statusValue.textContent = text;
+}
+
+function setOverlay(title, text, hidden) {
+  overlayTitle.textContent = title;
+  overlayText.textContent = text;
+  overlayPanel.classList.toggle("hidden", hidden);
 }
 
 function hitWall(cell) {
@@ -279,9 +354,15 @@ function draw(showOverlay = false) {
 
   ctx.clearRect(0, 0, size, size);
 
+  const boardGradient = ctx.createLinearGradient(0, 0, 0, size);
+  boardGradient.addColorStop(0, "#fff8f1");
+  boardGradient.addColorStop(1, "#f0decb");
+  ctx.fillStyle = boardGradient;
+  ctx.fillRect(0, 0, size, size);
+
   for (let y = 0; y < CELL_COUNT; y += 1) {
     for (let x = 0; x < CELL_COUNT; x += 1) {
-      ctx.fillStyle = (x + y) % 2 === 0 ? "#fff9f2" : "#f5eadf";
+      ctx.fillStyle = (x + y) % 2 === 0 ? "rgba(255,255,255,0.18)" : "rgba(117,70,44,0.04)";
       ctx.fillRect(x * cell, y * cell, cell, cell);
     }
   }
@@ -292,30 +373,33 @@ function draw(showOverlay = false) {
   snake.forEach((segment, index) => {
     const px = segment.x * cell;
     const py = segment.y * cell;
-    const radius = cell * 0.22;
+    const radius = cell * 0.28;
+    const bodyGradient = ctx.createLinearGradient(px, py, px + cell, py + cell);
+    bodyGradient.addColorStop(0, index === 0 ? "#8c5a3a" : "#c17c4f");
+    bodyGradient.addColorStop(1, index === 0 ? "#59311c" : "#8e5838");
 
-    ctx.fillStyle = index === 0 ? "#7c5132" : "#a66a45";
+    ctx.fillStyle = bodyGradient;
     roundRect(px + 3, py + 3, cell - 6, cell - 6, radius);
     ctx.fill();
 
     if (index === 0) {
       ctx.fillStyle = "#fff";
       ctx.beginPath();
-      ctx.arc(px + cell * 0.38, py + cell * 0.36, cell * 0.07, 0, Math.PI * 2);
-      ctx.arc(px + cell * 0.62, py + cell * 0.36, cell * 0.07, 0, Math.PI * 2);
+      ctx.arc(px + cell * 0.36, py + cell * 0.35, cell * 0.07, 0, Math.PI * 2);
+      ctx.arc(px + cell * 0.62, py + cell * 0.35, cell * 0.07, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#20110a";
+      ctx.beginPath();
+      ctx.arc(px + cell * 0.37, py + cell * 0.35, cell * 0.03, 0, Math.PI * 2);
+      ctx.arc(px + cell * 0.63, py + cell * 0.35, cell * 0.03, 0, Math.PI * 2);
       ctx.fill();
     }
   });
 
   if (showOverlay) {
-    ctx.fillStyle = "rgba(44, 29, 19, 0.48)";
+    ctx.fillStyle = "rgba(34, 21, 13, 0.32)";
     ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = "#fff8f1";
-    ctx.font = "700 32px Trebuchet MS";
-    ctx.textAlign = "center";
-    ctx.fillText("游戏结束", size / 2, size / 2 - 8);
-    ctx.font = "600 18px Trebuchet MS";
-    ctx.fillText("点“重新开始”再来一局", size / 2, size / 2 + 24);
   }
 }
 
@@ -328,9 +412,14 @@ function drawPoop(cell, size) {
 
   ctx.fillStyle = "#6f4025";
   ctx.beginPath();
-  ctx.ellipse(x + size * 0.5, y + size * 0.7, size * 0.22, size * 0.14, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + size * 0.5, y + size * 0.72, size * 0.22, size * 0.14, 0, 0, Math.PI * 2);
   ctx.ellipse(x + size * 0.5, y + size * 0.5, size * 0.18, size * 0.14, 0, 0, Math.PI * 2);
   ctx.ellipse(x + size * 0.5, y + size * 0.33, size * 0.12, size * 0.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.22)";
+  ctx.beginPath();
+  ctx.arc(x + size * 0.57, y + size * 0.28, size * 0.05, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -372,4 +461,66 @@ function clearTimer() {
 
 function setMessage(text) {
   messageText.textContent = text;
+}
+
+function unlockAudio() {
+  if (!window.AudioContext && !window.webkitAudioContext) {
+    return;
+  }
+
+  if (!audioContext) {
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    audioContext = new AudioCtor();
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume().catch(() => {});
+  }
+}
+
+function playSound(type) {
+  if (!audioContext) {
+    return;
+  }
+
+  const now = audioContext.currentTime;
+  const master = audioContext.createGain();
+  master.connect(audioContext.destination);
+
+  const patterns = {
+    start: [
+      [392, 0.07, "triangle", 0.06],
+      [523.25, 0.09, "triangle", 0.05],
+      [659.25, 0.12, "triangle", 0.05]
+    ],
+    grow: [
+      [330, 0.04, "sine", 0.05],
+      [494, 0.06, "sine", 0.05]
+    ],
+    shrink: [
+      [280, 0.04, "square", 0.04],
+      [220, 0.08, "square", 0.03]
+    ],
+    gameOver: [
+      [320, 0.08, "sawtooth", 0.05],
+      [220, 0.09, "sawtooth", 0.05],
+      [160, 0.18, "sawtooth", 0.04]
+    ]
+  };
+
+  let cursor = now;
+  for (const [frequency, duration, wave, volume] of patterns[type] || []) {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = wave;
+    osc.frequency.setValueAtTime(frequency, cursor);
+    gain.gain.setValueAtTime(0.0001, cursor);
+    gain.gain.exponentialRampToValueAtTime(volume, cursor + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, cursor + duration);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(cursor);
+    osc.stop(cursor + duration);
+    cursor += duration * 0.82;
+  }
 }

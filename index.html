@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#7a4b2f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -19,23 +19,24 @@
 
     <main class="app-shell">
       <section class="hero-card">
-        <div class="title-row">
-          <div>
-            <p class="eyebrow">Mini Game App</p>
-            <h1>便便贪吃蛇</h1>
-          </div>
-          <button id="installBtn" class="install-btn" hidden>安装 APP</button>
+        <div class="hero-copy">
+          <p class="eyebrow">Touch Game App</p>
+          <h1>便便贪吃蛇</h1>
+          <p class="subtitle">手机触屏操作。吃便便会长大，吃绿色虫子巧克力会变小。撞墙或撞到自己，游戏结束。</p>
         </div>
 
-        <p class="subtitle">
-          吃到棕色便便会变长，吃到绿色虫子巧克力会变短。撞墙或撞到自己，游戏结束。
-        </p>
+        <div class="hero-actions">
+          <button id="startBtn" class="primary-btn">开始游戏</button>
+          <button id="pauseBtn" class="ghost-btn">暂停</button>
+          <button id="restartBtn" class="ghost-btn">重开</button>
+          <button id="installBtn" class="install-btn" hidden>安装 APP</button>
+        </div>
 
         <div class="rule-strip">
           <div class="rule-card rule-grow">
             <span class="rule-icon"></span>
             <div>
-              <strong>便便</strong>
+              <strong>便便补给</strong>
               <p>长度 +1，分数 +10</p>
             </div>
           </div>
@@ -43,65 +44,66 @@
             <span class="rule-icon"></span>
             <div>
               <strong>绿色虫子巧克力</strong>
-              <p>长度 -1，速度微微加快</p>
+              <p>长度 -1，速度会更快</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="game-layout">
-        <div class="board-card">
-          <div class="status-bar">
-            <div class="stat">
-              <span>分数</span>
-              <strong id="scoreValue">0</strong>
-            </div>
-            <div class="stat">
-              <span>长度</span>
-              <strong id="lengthValue">3</strong>
-            </div>
-            <div class="stat">
-              <span>最快</span>
-              <strong id="bestValue">0</strong>
-            </div>
+      <section class="arena-card">
+        <div class="hud-bar">
+          <div class="hud-pill">
+            <span>分数</span>
+            <strong id="scoreValue">0</strong>
           </div>
-
-          <canvas id="gameCanvas" width="420" height="420" aria-label="贪吃蛇游戏画布"></canvas>
-
-          <div class="message-bar">
-            <span id="messageText">按方向键开始，或点“开始游戏”。</span>
+          <div class="hud-pill">
+            <span>长度</span>
+            <strong id="lengthValue">3</strong>
+          </div>
+          <div class="hud-pill">
+            <span>纪录</span>
+            <strong id="bestValue">0</strong>
+          </div>
+          <div class="hud-pill">
+            <span>状态</span>
+            <strong id="statusValue">待机</strong>
           </div>
         </div>
 
-        <aside class="side-card">
-          <div class="action-stack">
-            <button id="startBtn" class="primary-btn">开始游戏</button>
-            <button id="pauseBtn" class="ghost-btn">暂停</button>
-            <button id="restartBtn" class="ghost-btn">重新开始</button>
+        <div id="boardWrap" class="board-wrap">
+          <canvas id="gameCanvas" width="420" height="420" aria-label="便便贪吃蛇游戏画布"></canvas>
+          <div id="overlayPanel" class="overlay-panel">
+            <div class="overlay-badge">触屏版</div>
+            <h2 id="overlayTitle">向上滑一下开始</h2>
+            <p id="overlayText">在棋盘上滑动，也可以点下面方向盘。</p>
           </div>
+        </div>
 
-          <div class="tip-card">
-            <h2>操作</h2>
-            <p>电脑：方向键 / WASD</p>
-            <p>手机：使用下面四个方向按钮</p>
-          </div>
+        <div class="message-bar">
+          <span id="messageText">准备好了。用手指在棋盘上滑动开始。</span>
+        </div>
+      </section>
 
-          <div class="tip-card">
-            <h2>目标</h2>
-            <p>尽量拉长蛇身，但别被绿色虫子巧克力削得太短。</p>
-          </div>
-        </aside>
+      <section class="control-deck">
+        <div class="touch-card">
+          <h3>触屏操作</h3>
+          <p>直接在棋盘上滑动切换方向，也能点下面的大按钮。</p>
+        </div>
+        <div class="touch-card">
+          <h3>节奏提示</h3>
+          <p>绿色虫子巧克力会让你变短，而且节奏会更快。</p>
+        </div>
       </section>
 
       <section class="controls-card">
         <div class="mobile-pad">
-          <button class="pad-btn" data-dir="up" aria-label="向上">上</button>
+          <button class="pad-btn pad-up" data-dir="up" aria-label="向上">上</button>
           <div class="pad-mid">
             <button class="pad-btn" data-dir="left" aria-label="向左">左</button>
             <button class="pad-btn pad-center" id="tapStartBtn" aria-label="开始或暂停">开</button>
             <button class="pad-btn" data-dir="right" aria-label="向右">右</button>
           </div>
-          <button class="pad-btn" data-dir="down" aria-label="向下">下</button>
+          <button class="pad-btn pad-down" data-dir="down" aria-label="向下">下</button>
         </div>
       </section>
     </main>
