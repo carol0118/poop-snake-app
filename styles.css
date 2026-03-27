@@ -86,19 +86,24 @@ canvas {
   padding: 8px 10px;
   border-radius: 18px;
   transition: padding 140ms ease, opacity 140ms ease, transform 140ms ease;
+  overflow: hidden;
 }
 
 body.playing .hero-card {
-  padding: 4px 8px;
+  padding: 0 8px;
+  min-height: 0;
+  max-height: 0;
+  border-width: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  box-shadow: none;
 }
 
 .arena-card {
-  padding: 6px;
+  padding: 0;
   min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 4px;
   border-radius: 20px;
+  overflow: hidden;
 }
 
 .controls-card {
@@ -107,6 +112,10 @@ body.playing .hero-card {
   position: sticky;
   bottom: 2px;
   background: rgba(255, 250, 245, 0.72);
+}
+
+body.playing .controls-card {
+  padding: 4px 6px;
 }
 
 h1,
@@ -211,11 +220,20 @@ body.playing .hero-actions {
   gap: 4px;
 }
 
+.hud-overlay {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  z-index: 4;
+}
+
 .hud-pill {
-  background: var(--paper-strong);
+  background: rgba(255, 252, 248, 0.88);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 6px 8px;
+  backdrop-filter: blur(6px);
 }
 
 .hud-pill span {
@@ -234,7 +252,8 @@ body.playing .hero-actions {
 .board-wrap {
   position: relative;
   min-height: 0;
-  border-radius: 18px;
+  height: 100%;
+  border-radius: 20px;
   padding: 3px;
   background:
     linear-gradient(180deg, rgba(112, 67, 42, 0.12), rgba(115, 176, 73, 0.08)),
@@ -258,7 +277,7 @@ body.playing .hero-actions {
 
 .overlay-panel {
   position: absolute;
-  inset: 10px;
+  inset: 46px 10px 10px;
   display: grid;
   place-content: center;
   justify-items: center;
@@ -381,7 +400,7 @@ body.playing .hero-actions {
 }
 
 .pad-btn {
-  min-height: 54px;
+  min-height: 50px;
   border-radius: 16px;
   background: linear-gradient(180deg, #fffaf5, #eedac7);
   color: var(--brown-deep);
@@ -404,5 +423,15 @@ body.playing .hero-actions {
 @media (max-width: 480px) {
   .hud-bar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hud-overlay {
+    left: 6px;
+    right: 6px;
+    top: 6px;
+  }
+
+  .overlay-panel {
+    inset: 72px 8px 8px;
   }
 }

@@ -387,9 +387,8 @@ function renderLoop(now) {
 function resizeCanvas() {
   const heroHeight = document.querySelector(".hero-card").offsetHeight;
   const controlsHeight = document.querySelector(".controls-card").offsetHeight;
-  const hudHeight = document.querySelector(".hud-bar").offsetHeight;
-  const gapBudget = document.body.classList.contains("playing") ? 10 : 22;
-  const available = window.innerHeight - heroHeight - controlsHeight - hudHeight - gapBudget;
+  const gapBudget = document.body.classList.contains("playing") ? 6 : 14;
+  const available = window.innerHeight - heroHeight - controlsHeight - gapBudget;
   const cssSize = Math.max(320, Math.min(boardWrap.clientWidth - 6, available));
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 

@@ -38,27 +38,26 @@
       </section>
 
       <section class="arena-card">
-        <div class="hud-bar">
-          <div class="hud-pill">
-            <span>分数</span>
-            <strong id="scoreValue">0</strong>
-          </div>
-          <div class="hud-pill">
-            <span>长度</span>
-            <strong id="lengthValue">3</strong>
-          </div>
-          <div class="hud-pill">
-            <span>纪录</span>
-            <strong id="bestValue">0</strong>
-          </div>
-          <div class="hud-pill">
-            <span>状态</span>
-            <strong id="statusValue">待机</strong>
-          </div>
-        </div>
-
         <div id="boardWrap" class="board-wrap">
           <canvas id="gameCanvas" width="420" height="420" aria-label="便便贪吃蛇游戏画布"></canvas>
+          <div class="hud-bar hud-overlay">
+            <div class="hud-pill">
+              <span>分数</span>
+              <strong id="scoreValue">0</strong>
+            </div>
+            <div class="hud-pill">
+              <span>长度</span>
+              <strong id="lengthValue">3</strong>
+            </div>
+            <div class="hud-pill">
+              <span>纪录</span>
+              <strong id="bestValue">0</strong>
+            </div>
+            <div class="hud-pill">
+              <span>状态</span>
+              <strong id="statusValue">待机</strong>
+            </div>
+          </div>
           <div id="overlayPanel" class="overlay-panel">
             <div class="overlay-badge">触屏版</div>
             <div class="swipe-guide" aria-hidden="true">
